@@ -16,11 +16,14 @@ public class PlaceModel implements Serializable {
     private String id;
     @SerializedName("name")
     private String name;
+    @SerializedName("icon")
+    private String icon;
 
-    public PlaceModel(GeometryModel geometry, String id, String name) {
+    public PlaceModel(GeometryModel geometry, String id, String name, String icon) {
         this.mGeometry = geometry;
         this.id = id;
         this.name = name;
+        this.icon = icon;
     }
 
     public GeometryModel getGeometry() {
@@ -45,5 +48,13 @@ public class PlaceModel implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
     }
 }

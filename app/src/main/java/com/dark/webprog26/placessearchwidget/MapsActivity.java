@@ -1,18 +1,33 @@
 package com.dark.webprog26.placessearchwidget;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.util.Log;
+import android.widget.Toast;
 
+import com.dark.webprog26.placessearchwidget.events.PlacesIconsReadyEvent;
+import com.dark.webprog26.placessearchwidget.events.PlacesListReadyEvent;
+import com.dark.webprog26.placessearchwidget.helpers.BitmapDecoder;
 import com.dark.webprog26.placessearchwidget.models.LocationModel;
 import com.dark.webprog26.placessearchwidget.models.PlaceModel;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -21,6 +36,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public static final String USER_SEARCH_PLACES_LOCATIONS_LIST = "com.dark.webprog26.placessearchwidget.user_search_places_locations_list";
 
     private LocationModel mLocationModel;
+    private Map<PlaceModel, Bitmap> mIconsMap = new HashMap<>();
 
     private GoogleMap mMap;
 
@@ -34,6 +50,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        EventBus.getDefault().register(this);
+    }
 
     /**
      * Manipulates the map once available.
@@ -47,25 +68,58 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 
-        // Add a marker in Sydney and move the camera
-        mLocationModel = (LocationModel) getIntent().getSerializableExtra(USER_CURRENT_LOCATION);
-        if(mLocationModel != null){
-            LatLng userLocation = new LatLng(mLocationModel.getLat(), mLocationModel.getLng());
-            mMap.addMarker(new MarkerOptions().position(userLocation).title("Marker in Sydney"));
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(userLocation));
+        try{
+            mMap.setMyLocationEnabled(true);
+        } catch (SecurityException se){
+            se.printStackTrace();
         }
-
 
         ArrayList<PlaceModel> placeModels = (ArrayList<PlaceModel>) getIntent().getSerializableExtra(USER_SEARCH_PLACES_LOCATIONS_LIST);
 
         if(placeModels != null){
-            for(PlaceModel placeModel: placeModels){
-                LocationModel locationModel = placeModel.getGeometry().getLocation();
-                LatLng userSearchLocation = new LatLng(locationModel.getLat(), locationModel.getLng());
-                mMap.addMarker(new MarkerOptions().position(userSearchLocation).title(placeModel.getName()));
+            if(placeModels.size() == 0){
+                Toast.makeText(MapsActivity.this, "We are unable to find any places for your request", Toast.LENGTH_SHORT).show();
+            } else {
+                EventBus.getDefault().post(new PlacesListReadyEvent(placeModels));
             }
         }
 
+        mLocationModel = (LocationModel) getIntent().getSerializableExtra(USER_CURRENT_LOCATION);
+        if(mLocationModel != null){
+            LatLng userLocation = new LatLng(mLocationModel.getLat(), mLocationModel.getLng());
+            mMap.addMarker(new MarkerOptions().position(userLocation).title("You are here").icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher))));
+            mMap.moveCamera(CameraUpdateFactory.zoomTo(14f));
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(userLocation));
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        EventBus.getDefault().unregister(this);
+        super.onStop();
+    }
+
+    @Subscribe(threadMode = ThreadMode.ASYNC)
+    public void onPlacesListReadyEvent(PlacesListReadyEvent placesListReadyEvent){
+        ArrayList<PlaceModel> placeModels = placesListReadyEvent.getPlaceModels();
+
+            for(PlaceModel placeModel: placeModels){
+                Log.i(TAG, "icon " + placeModel.getIcon());
+                mIconsMap.put(placeModel, BitmapDecoder.getBitmapFromURL(placeModel.getIcon()));
+        }
+        EventBus.getDefault().post(new PlacesIconsReadyEvent(mIconsMap));
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onPlacesIconsReadyEvent(PlacesIconsReadyEvent placesIconsReadyEvent){
+        for(PlaceModel placeModel: mIconsMap.keySet()){
+            LocationModel locationModel = placeModel.getGeometry().getLocation();
+            LatLng userSearchLocation = new LatLng(locationModel.getLat(), locationModel.getLng());
+            mMap.addMarker(new MarkerOptions().position(userSearchLocation)
+                                              .title(placeModel.getName())
+                                              .icon(BitmapDescriptorFactory.fromBitmap(mIconsMap.get(placeModel))));
+        }
     }
 }

@@ -34,7 +34,7 @@ public class GPSTracker implements LocationListener {
     double lat;
     double lng;
 
-    private static final long MIN_UPDATE_DISTANCE = 100;//100 meters
+    private static final long MIN_UPDATE_DISTANCE = 10;//10 meters
     private static final long MIN_UPDATE_TIME = 1000 * 60 * 10;//10 minutes
 
     protected LocationManager mLocationManager;
@@ -156,7 +156,7 @@ public class GPSTracker implements LocationListener {
 
     @Override
     public void onLocationChanged(Location location) {
-
+        mLocation = location;
     }
 
     @Override
