@@ -1,6 +1,7 @@
 package com.dark.webprog26.placessearchwidget;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -67,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
                                     Log.i(TAG, "PlaceModel coordinates: lat: " + place.getGeometry().getLocation().getLat() + " lng "
                                             + place.getGeometry().getLocation().getLng());
                                 }
+                                startActivity(new Intent(MainActivity.this, MapsActivity.class));
                             }
 
                             @Override
