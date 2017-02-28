@@ -19,8 +19,6 @@ import com.dark.webprog26.placessearchwidget.retrofit.ApiClient;
 import com.dark.webprog26.placessearchwidget.retrofit.ApiInterface;
 
 import java.util.ArrayList;
-import java.util.List;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import retrofit2.Call;
@@ -68,10 +66,6 @@ public class MainActivity extends AppCompatActivity {
                             public void onResponse(Call<PlacesResponseModel> call, Response<PlacesResponseModel> response) {
                                 ArrayList<PlaceModel> placeModels = new ArrayList<PlaceModel>();
                                 for(PlaceModel placeModel: response.body().getPlaceResults()){
-                                    Log.i(TAG, "PlaceModel name: " + placeModel.getName());
-                                    Log.i(TAG, "PlaceModel coordinates: lat: " + placeModel.getGeometry().getLocation().getLat()
-                                            + " lng "
-                                            + placeModel.getGeometry().getLocation().getLng());
                                     placeModels.add(placeModel);
                                 }
                                 Intent mapIntent = new Intent(MainActivity.this, MapsActivity.class);
@@ -98,9 +92,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void hideKeyboard() {
         InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-        //Find the currently focused view, so we can grab the correct window token from it.
         View view = getCurrentFocus();
-        //If no view currently has focus, create a new one, just so we can grab a window token from it
         if (view == null) {
             view = new View(this);
         }
