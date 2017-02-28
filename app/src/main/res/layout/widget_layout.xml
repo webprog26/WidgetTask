@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/widget_padding"
+    android:paddingTop="@dimen/widget_padding"
+    android:paddingRight="@dimen/widget_padding"
+    android:paddingBottom="@dimen/widget_padding">
+    <TextView
+        android:id="@+id/tvSearchResults"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="3"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="@android:color/black"
+        android:background="@android:color/white"/>
+    <ImageButton
+        android:id="@+id/ibMakeSearch"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:src="@android:drawable/ic_menu_search"
+        android:background="@android:color/holo_blue_light"/>
+</LinearLayout>

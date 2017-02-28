@@ -2,53 +2,44 @@ package com.dark.webprog26.placessearchwidget;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-
 import com.dark.webprog26.placessearchwidget.helpers.ConnectionDetector;
-import com.dark.webprog26.placessearchwidget.helpers.GPSTracker;
-import com.dark.webprog26.placessearchwidget.models.LocationModel;
-import com.dark.webprog26.placessearchwidget.models.PlaceModel;
-import com.dark.webprog26.placessearchwidget.models.PlacesResponseModel;
-import com.dark.webprog26.placessearchwidget.retrofit.ApiClient;
-import com.dark.webprog26.placessearchwidget.retrofit.ApiInterface;
-
-import java.util.ArrayList;
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity_TAG";
 
-    private static final String API_KEY = "AIzaSyChjhvT_en1QoGu5aICiDU8WEPmrqS7CeI";
+
+    public static final String PREFS_LAST_SEARCH_REQUEST = "com.dark.webprog26.placessearchwidget.prefs_last_search_request";
+
+
+    private SharedPreferences mSharedPreferences;
 
     @BindView(R.id.etRequest)
     EditText mEtRequest;
     @BindView(R.id.fbSearchByRequest)
     FloatingActionButton mFbSearchByRequest;
-    private ApiInterface mApiInterface;
+
     private ConnectionDetector mConnectionDetector;
-    private GPSTracker mGpsTracker;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-        mGpsTracker = new GPSTracker(this);
-        if(!mGpsTracker.canGetLocation()){
-            mGpsTracker.showSettingsAlert();
-        }
-        mApiInterface = ApiClient.getClient().create(ApiInterface.class);
+        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
         mConnectionDetector = new ConnectionDetector(this);
 
         mFbSearchByRequest.setOnClickListener(new View.OnClickListener() {
@@ -57,37 +48,15 @@ public class MainActivity extends AppCompatActivity {
                 if(mConnectionDetector.isConnectedToInternet()){
                     String mRequestString = mEtRequest.getText().toString();
                     if(mRequestString.length() > 0){
-                        final LocationModel userLocationModel = new LocationModel(mGpsTracker.getLatitude(), mGpsTracker.getLongitude());
-                        String locationString = makeLocationString(userLocationModel);
-                        final Call<PlacesResponseModel> placesResponseCall = mApiInterface.getPlaces(mRequestString, locationString, API_KEY);
-                        Log.i(TAG, placesResponseCall.request().toString());
-                        placesResponseCall.enqueue(new Callback<PlacesResponseModel>() {
-                            @Override
-                            public void onResponse(Call<PlacesResponseModel> call, Response<PlacesResponseModel> response) {
-                                ArrayList<PlaceModel> placeModels = new ArrayList<PlaceModel>();
-                                for(PlaceModel placeModel: response.body().getPlaceResults()){
-                                    placeModels.add(placeModel);
-                                }
-                                Intent mapIntent = new Intent(MainActivity.this, MapsActivity.class);
-                                mapIntent.putExtra(MapsActivity.USER_CURRENT_LOCATION, userLocationModel);
-                                mapIntent.putExtra(MapsActivity.USER_SEARCH_PLACES_LOCATIONS_LIST, placeModels);
-                                startActivity(mapIntent);
-                            }
+                        mSharedPreferences.edit().putString(PREFS_LAST_SEARCH_REQUEST, mRequestString).apply();
 
-                            @Override
-                            public void onFailure(Call<PlacesResponseModel> call, Throwable t) {
-                                Log.i(TAG, t.toString());
-                            }
-                        });
+                        Intent mapIntent = new Intent(MainActivity.this, MapsActivity.class);
+                        startActivity(mapIntent);
                     }
                 }
                hideKeyboard();
             }
         });
-    }
-
-    private String makeLocationString(LocationModel locationModel){
-        return "" + locationModel.getLat() + "," + locationModel.getLng();
     }
 
     private void hideKeyboard() {
