@@ -2,11 +2,13 @@ package com.dark.webprog26.placessearchwidget.models;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
+
 /**
  * Created by webpr on 27.02.2017.
  */
 
-public class GeometryModel {
+public class GeometryModel implements Serializable{
 
     @SerializedName("location")
     private LocationModel mLocation;

@@ -18,6 +18,9 @@ import com.dark.webprog26.placessearchwidget.models.PlacesResponseModel;
 import com.dark.webprog26.placessearchwidget.retrofit.ApiClient;
 import com.dark.webprog26.placessearchwidget.retrofit.ApiInterface;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import retrofit2.Call;
@@ -56,19 +59,25 @@ public class MainActivity extends AppCompatActivity {
                 if(mConnectionDetector.isConnectedToInternet()){
                     String mRequestString = mEtRequest.getText().toString();
                     if(mRequestString.length() > 0){
-                        LocationModel locationModel = new LocationModel(mGpsTracker.getLatitude(), mGpsTracker.getLongitude());
-                        String locationString = makeLocationString(locationModel);
+                        final LocationModel userLocationModel = new LocationModel(mGpsTracker.getLatitude(), mGpsTracker.getLongitude());
+                        String locationString = makeLocationString(userLocationModel);
                         final Call<PlacesResponseModel> placesResponseCall = mApiInterface.getPlaces(mRequestString, locationString, API_KEY);
                         Log.i(TAG, placesResponseCall.request().toString());
                         placesResponseCall.enqueue(new Callback<PlacesResponseModel>() {
                             @Override
                             public void onResponse(Call<PlacesResponseModel> call, Response<PlacesResponseModel> response) {
-                                for(PlaceModel place: response.body().getPlaceResults()){
-                                    Log.i(TAG, "PlaceModel name: " + place.getName());
-                                    Log.i(TAG, "PlaceModel coordinates: lat: " + place.getGeometry().getLocation().getLat() + " lng "
-                                            + place.getGeometry().getLocation().getLng());
+                                ArrayList<PlaceModel> placeModels = new ArrayList<PlaceModel>();
+                                for(PlaceModel placeModel: response.body().getPlaceResults()){
+                                    Log.i(TAG, "PlaceModel name: " + placeModel.getName());
+                                    Log.i(TAG, "PlaceModel coordinates: lat: " + placeModel.getGeometry().getLocation().getLat()
+                                            + " lng "
+                                            + placeModel.getGeometry().getLocation().getLng());
+                                    placeModels.add(placeModel);
                                 }
-                                startActivity(new Intent(MainActivity.this, MapsActivity.class));
+                                Intent mapIntent = new Intent(MainActivity.this, MapsActivity.class);
+                                mapIntent.putExtra(MapsActivity.USER_CURRENT_LOCATION, userLocationModel);
+                                mapIntent.putExtra(MapsActivity.USER_SEARCH_PLACES_LOCATIONS_LIST, placeModels);
+                                startActivity(mapIntent);
                             }
 
                             @Override

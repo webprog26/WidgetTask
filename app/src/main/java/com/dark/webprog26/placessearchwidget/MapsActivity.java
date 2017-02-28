@@ -3,6 +3,8 @@ package com.dark.webprog26.placessearchwidget;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
+import com.dark.webprog26.placessearchwidget.models.LocationModel;
+import com.dark.webprog26.placessearchwidget.models.PlaceModel;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -10,7 +12,15 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.ArrayList;
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+
+    private static final String TAG = "MapsActivity_TAG";
+    public static final String USER_CURRENT_LOCATION = "com.dark.webprog26.placessearchwidget.user_current_location";
+    public static final String USER_SEARCH_PLACES_LOCATIONS_LIST = "com.dark.webprog26.placessearchwidget.user_search_places_locations_list";
+
+    private LocationModel mLocationModel;
 
     private GoogleMap mMap;
 
@@ -39,8 +49,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        mLocationModel = (LocationModel) getIntent().getSerializableExtra(USER_CURRENT_LOCATION);
+        if(mLocationModel != null){
+            LatLng userLocation = new LatLng(mLocationModel.getLat(), mLocationModel.getLng());
+            mMap.addMarker(new MarkerOptions().position(userLocation).title("Marker in Sydney"));
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(userLocation));
+        }
+
+
+        ArrayList<PlaceModel> placeModels = (ArrayList<PlaceModel>) getIntent().getSerializableExtra(USER_SEARCH_PLACES_LOCATIONS_LIST);
+
+        if(placeModels != null){
+            for(PlaceModel placeModel: placeModels){
+                LocationModel locationModel = placeModel.getGeometry().getLocation();
+                LatLng userSearchLocation = new LatLng(locationModel.getLat(), locationModel.getLng());
+                mMap.addMarker(new MarkerOptions().position(userSearchLocation).title(placeModel.getName()));
+            }
+        }
+
     }
 }
