@@ -62,7 +62,7 @@ public class PlacesLoader {
                     placeModels.add(placeModel);
                 }
                 mSharedPreferences.edit().putInt(MapsActivity.PREFS_LAST_SEARCH_RESULTS_COUNT, placeModels.size()).apply();
-
+//
                     switch (mCurrentMode){
                         case MapsActivity.MAPS_ACTIVITY_MODE:
                             EventBus.getDefault().post(new PlacesListReadyEvent(placeModels));
