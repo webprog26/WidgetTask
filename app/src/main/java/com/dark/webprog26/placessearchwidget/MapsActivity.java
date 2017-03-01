@@ -8,18 +8,14 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.Toast;
 import com.dark.webprog26.placessearchwidget.events.PlacesIconsReadyEvent;
 import com.dark.webprog26.placessearchwidget.events.PlacesListReadyEvent;
-import com.dark.webprog26.placessearchwidget.events.SearchForThePlacesEvent;
 import com.dark.webprog26.placessearchwidget.helpers.BitmapDecoder;
 import com.dark.webprog26.placessearchwidget.helpers.GPSTracker;
 import com.dark.webprog26.placessearchwidget.helpers.MarkerAnimator;
+import com.dark.webprog26.placessearchwidget.helpers.PlacesLoader;
 import com.dark.webprog26.placessearchwidget.models.LocationModel;
 import com.dark.webprog26.placessearchwidget.models.PlaceModel;
-import com.dark.webprog26.placessearchwidget.models.PlacesResponseModel;
-import com.dark.webprog26.placessearchwidget.retrofit.ApiClient;
-import com.dark.webprog26.placessearchwidget.retrofit.ApiInterface;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -34,9 +30,6 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 import static com.dark.webprog26.placessearchwidget.R.id.map;
 
@@ -46,9 +39,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private static final float CAMERA_ZOOM_DISTANCE = 12f;
 
-    private static final String API_KEY = "AIzaSyChjhvT_en1QoGu5aICiDU8WEPmrqS7CeI";
-
-    public static final String USER_REQUEST = "com.dark.webprog26.placessearchwidget.user_request";
+    public static final int MAPS_ACTIVITY_MODE = 101;
     public static final String PREFS_LAST_SEARCH_RESULTS_COUNT = "com.dark.webprog26.placessearchwidget.prefs_last_search_result_count";
 
 
@@ -57,7 +48,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private SharedPreferences mSharedPreferences;
 
     private GoogleMap mMap;
-    private ApiInterface mApiInterface;
     private GPSTracker mGpsTracker;
 
     @Override
@@ -66,11 +56,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         setContentView(R.layout.activity_maps);
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mGpsTracker = new GPSTracker(this);
-        mGpsTracker = new GPSTracker(this);
         if(!mGpsTracker.canGetLocation()){
             mGpsTracker.showSettingsAlert();
         }
-        mApiInterface = ApiClient.getClient().create(ApiInterface.class);
+        mLocationModel = new LocationModel(mGpsTracker.getLatitude(), mGpsTracker.getLongitude());
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(map);
@@ -88,38 +77,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onResume();
         String userRequest = mSharedPreferences.getString(MainActivity.PREFS_LAST_SEARCH_REQUEST, null);
         if(userRequest != null){
-            final LocationModel userLocationModel = new LocationModel(mGpsTracker.getLatitude(), mGpsTracker.getLongitude());
-            String locationString = makeLocationString(userLocationModel);
-            EventBus.getDefault().post(new SearchForThePlacesEvent(locationString, userRequest));
+            new PlacesLoader(MapsActivity.this).loadPlaces(MAPS_ACTIVITY_MODE, mLocationModel, userRequest);
         }
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onSearchForThePlacesEvent(SearchForThePlacesEvent searchForThePlacesEvent){
-        final Call<PlacesResponseModel> placesResponseCall = mApiInterface.getPlaces(searchForThePlacesEvent.getRequest(),
-                                                             searchForThePlacesEvent.getLocationString(), API_KEY);
-        Log.i(TAG, placesResponseCall.request().toString());
-        placesResponseCall.enqueue(new Callback<PlacesResponseModel>() {
-            @Override
-            public void onResponse(Call<PlacesResponseModel> call, Response<PlacesResponseModel> response) {
-                ArrayList<PlaceModel> placeModels = new ArrayList<PlaceModel>();
-                for(PlaceModel placeModel: response.body().getPlaceResults()){
-                    placeModels.add(placeModel);
-                }
-                mSharedPreferences.edit().putInt(PREFS_LAST_SEARCH_RESULTS_COUNT, placeModels.size()).apply();
-
-                if(placeModels.size() == 0){
-                    Toast.makeText(MapsActivity.this, getString(R.string.no_results_found), Toast.LENGTH_SHORT).show();
-                } else {
-                    EventBus.getDefault().post(new PlacesListReadyEvent(placeModels));
-                }
-            }
-
-            @Override
-            public void onFailure(Call<PlacesResponseModel> call, Throwable t) {
-                Log.i(TAG, t.toString());
-            }
-        });
     }
 
     /**
@@ -142,7 +101,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             se.printStackTrace();
         }
 
-        mLocationModel = new LocationModel(mGpsTracker.getLatitude(), mGpsTracker.getLongitude());
         if(mLocationModel != null){
             LatLng userLocation = new LatLng(mLocationModel.getLat(), mLocationModel.getLng());
             mMap.addMarker(new MarkerOptions().position(userLocation)
@@ -187,9 +145,5 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             final Marker marker = mMap.addMarker(markerOptions);
             MarkerAnimator.animateMarker(mMap, marker, userSearchLocation);
         }
-    }
-
-    private String makeLocationString(LocationModel locationModel){
-        return "" + locationModel.getLat() + "," + locationModel.getLng();
     }
 }
