@@ -5,4 +5,5 @@
     <string name="you_are_here">You are here</string>
     <string name="search">Search</string>
     <string name="results_found">%1$s: %2$d results</string>
+    <string name="type_your_request">Type your request</string>
 </resources>
