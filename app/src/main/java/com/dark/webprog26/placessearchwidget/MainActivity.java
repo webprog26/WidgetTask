@@ -1,6 +1,7 @@
 package com.dark.webprog26.placessearchwidget;
 
 import android.app.Activity;
+import android.appwidget.AppWidgetManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
@@ -22,6 +23,9 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String PREFS_LAST_SEARCH_REQUEST = "com.dark.webprog26.placessearchwidget.prefs_last_search_request";
 
+    public static final String NEW_REQUEST = "com.dark.webprog26.placessearchwidget.new_request";
+    public static final int NEW_REQUEST_MODE = 102;
+
 
     private SharedPreferences mSharedPreferences;
 
@@ -31,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     FloatingActionButton mFbSearchByRequest;
 
     private ConnectionDetector mConnectionDetector;
+    private int mWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 
 
     @Override
@@ -49,8 +54,17 @@ public class MainActivity extends AppCompatActivity {
                     String mRequestString = mEtRequest.getText().toString();
                     if(mRequestString.length() > 0){
                         mSharedPreferences.edit().putString(PREFS_LAST_SEARCH_REQUEST, mRequestString).apply();
-
                         Intent mapIntent = new Intent(MainActivity.this, MapsActivity.class);
+                        mapIntent.putExtra(NEW_REQUEST, NEW_REQUEST_MODE);
+
+                        Bundle extras = getIntent().getExtras();
+                        if(extras != null){
+                            mWidgetId = extras.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+                        }
+
+                        if(mWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID){
+                            mapIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mWidgetId);
+                        }
                         startActivity(mapIntent);
                     }
                 }

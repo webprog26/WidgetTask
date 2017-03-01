@@ -3,4 +3,6 @@
     <string name="title_activity_maps">Map</string>
     <string name="no_results_found">Sorry. We are unable to find any places for your request</string>
     <string name="you_are_here">You are here</string>
+    <string name="search">Search</string>
+    <string name="results_found">%1$s: %2$d results</string>
 </resources>

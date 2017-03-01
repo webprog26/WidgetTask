@@ -1,5 +1,6 @@
 package com.dark.webprog26.placessearchwidget.helpers;
 
+import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
@@ -14,6 +15,7 @@ import com.dark.webprog26.placessearchwidget.models.PlaceModel;
 import com.dark.webprog26.placessearchwidget.models.PlacesResponseModel;
 import com.dark.webprog26.placessearchwidget.retrofit.ApiClient;
 import com.dark.webprog26.placessearchwidget.retrofit.ApiInterface;
+import com.dark.webprog26.placessearchwidget.widget.PlacesSearchWidget;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -30,6 +32,8 @@ import retrofit2.Response;
 
 public class PlacesLoader {
 
+    private static final String TAG = "PlacesLoader";
+
     private static final String API_KEY = "AIzaSyChjhvT_en1QoGu5aICiDU8WEPmrqS7CeI";
 
     private ApiInterface mApiInterface;
@@ -42,10 +46,12 @@ public class PlacesLoader {
         this.mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
     }
 
-    public void loadPlaces(final int mCurrentMode, final LocationModel locationModel, final String userRequest){
+    public void loadPlaces(final int mCurrentMode, final LocationModel locationModel, String userRequest, final int widgetId){
+        Log.i(TAG, "loadPlaces");
         final Call<PlacesResponseModel> placesResponseCall = mApiInterface.getPlaces(userRequest,
                 makeLocationString(locationModel), API_KEY);
         final Context context = mContextWeakReference.get();
+
         placesResponseCall.enqueue(new Callback<PlacesResponseModel>() {
             @Override
             public void onResponse(Call<PlacesResponseModel> call, Response<PlacesResponseModel> response) {
@@ -54,6 +60,10 @@ public class PlacesLoader {
                     placeModels.add(placeModel);
                 }
                 mSharedPreferences.edit().putInt(MapsActivity.PREFS_LAST_SEARCH_RESULTS_COUNT, placeModels.size()).apply();
+
+                if(widgetId != AppWidgetManager.INVALID_APPWIDGET_ID){
+                    PlacesSearchWidget.setWidgetLastSearchResults(context, AppWidgetManager.getInstance(context), widgetId);
+                }
 
                 if(placeModels.size() == 0){
                     Toast.makeText(context, context.getResources().getString(R.string.no_results_found), Toast.LENGTH_SHORT).show();

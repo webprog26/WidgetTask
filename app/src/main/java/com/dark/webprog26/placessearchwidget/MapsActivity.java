@@ -1,6 +1,7 @@
 package com.dark.webprog26.placessearchwidget;
 
 
+import android.appwidget.AppWidgetManager;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -64,6 +65,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(map);
         mapFragment.getMapAsync(this);
+        String userRequest = mSharedPreferences.getString(MainActivity.PREFS_LAST_SEARCH_REQUEST, null);
+        if(userRequest != null){
+            int widgetId;
+            if(getIntent().getIntExtra(MainActivity.NEW_REQUEST, 0) != 0){
+                widgetId = getIntent().getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+            } else {
+                widgetId = getIntent().getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+            }
+            new PlacesLoader(MapsActivity.this).loadPlaces(MAPS_ACTIVITY_MODE, mLocationModel, userRequest, widgetId);
+        }
     }
 
     @Override
@@ -75,10 +86,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onResume() {
         super.onResume();
-        String userRequest = mSharedPreferences.getString(MainActivity.PREFS_LAST_SEARCH_REQUEST, null);
-        if(userRequest != null){
-            new PlacesLoader(MapsActivity.this).loadPlaces(MAPS_ACTIVITY_MODE, mLocationModel, userRequest);
-        }
+//        String userRequest = mSharedPreferences.getString(MainActivity.PREFS_LAST_SEARCH_REQUEST, null);
+//        if(userRequest != null){
+//            int widgetId = getIntent().getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+//            new PlacesLoader(MapsActivity.this).loadPlaces(MAPS_ACTIVITY_MODE, mLocationModel, userRequest, widgetId);
+//        }
     }
 
     /**
