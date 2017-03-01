@@ -138,6 +138,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Subscribe(threadMode = ThreadMode.ASYNC)
     public void onPlacesListReadyEvent(PlacesListReadyEvent placesListReadyEvent){
         ArrayList<PlaceModel> placeModels = placesListReadyEvent.getPlaceModels();
+        Log.i(TAG, "onPlacesListReadyEvent " + placeModels.size());
+        if(placeModels.size() == 0){
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(MapsActivity.this, getString(R.string.no_results_found), Toast.LENGTH_SHORT).show();
+                    hideProgressBar();
+                }
+            });
+            return;
+        }
 
             for(PlaceModel placeModel: placeModels){
                 mIconsMap.put(placeModel, BitmapDecoder.getBitmapFromURL(placeModel.getIcon()));
@@ -163,7 +174,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             final Marker marker = mMap.addMarker(markerOptions);
             MarkerAnimator.animateMarker(mMap, marker, userSearchLocation);
         }
+        hideProgressBar();
+    }
 
+    private void hideProgressBar(){
         if(mProgressBarContainer.getVisibility() == View.VISIBLE){
             mProgressBarContainer.setVisibility(View.GONE);
         }

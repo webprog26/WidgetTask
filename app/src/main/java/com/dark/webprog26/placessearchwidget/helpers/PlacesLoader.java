@@ -63,11 +63,6 @@ public class PlacesLoader {
                 }
                 mSharedPreferences.edit().putInt(MapsActivity.PREFS_LAST_SEARCH_RESULTS_COUNT, placeModels.size()).apply();
 
-
-
-                if(placeModels.size() == 0){
-                    Toast.makeText(context, context.getResources().getString(R.string.no_results_found), Toast.LENGTH_SHORT).show();
-                } else {
                     switch (mCurrentMode){
                         case MapsActivity.MAPS_ACTIVITY_MODE:
                             EventBus.getDefault().post(new PlacesListReadyEvent(placeModels));
@@ -82,7 +77,6 @@ public class PlacesLoader {
                             PlacesSearchWidget.setWidgetLastSearchResults(context, AppWidgetManager.getInstance(context), widgetId);
                             break;
                     }
-                }
             }
 
             @Override
