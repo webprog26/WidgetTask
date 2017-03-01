@@ -68,7 +68,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         String userRequest = mSharedPreferences.getString(MainActivity.PREFS_LAST_SEARCH_REQUEST, null);
         if(userRequest != null){
             int widgetId;
-            if(getIntent().getIntExtra(MainActivity.NEW_REQUEST, 0) != 0){
+            if(getIntent().getIntExtra(MainActivity.NEW_REQUEST, 0) == MainActivity.NEW_REQUEST_MODE){
                 widgetId = getIntent().getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
             } else {
                 widgetId = getIntent().getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);

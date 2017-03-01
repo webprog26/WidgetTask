@@ -45,6 +45,7 @@
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+                <action android:name="com.dark.webprog26.placessearchwidget.action_new_request_processed"/>
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

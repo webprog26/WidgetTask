@@ -3,6 +3,7 @@ package com.dark.webprog26.placessearchwidget.widget;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -53,10 +54,24 @@ public class PlacesSearchWidget extends AppWidgetProvider {
                     GPSTracker gpsTracker = new GPSTracker(context);
                     final LocationModel locationModel = new LocationModel(gpsTracker.getLatitude(), gpsTracker.getLongitude());
                     new PlacesLoader(context).loadPlaces(WIDGET_UPDATE_MODE, locationModel, userRequest, widgetId);
-
                 }
             }
+        }
 
+        if(intent.getAction().equalsIgnoreCase(PlacesLoader.ACTION_NEW_REQUEST_PROCESSED)){
+            Log.i(TAG, "updating without id");
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+            RemoteViews widgetView = new RemoteViews(context.getPackageName(),
+                    R.layout.widget_layout);
+            String searchString = context.getString(R.string.search);;
+            String lastSearchRequest = sharedPreferences.getString(MainActivity.PREFS_LAST_SEARCH_REQUEST, null);
+            if(lastSearchRequest != null){
+                searchString = searchString + " " + context.getString(R.string.results_found, lastSearchRequest, sharedPreferences.getInt(MapsActivity.PREFS_LAST_SEARCH_RESULTS_COUNT, 0));
+            }
+            widgetView.setTextViewText(R.id.tvSearchResults, searchString);
+            ComponentName thisWidget = new ComponentName(context, PlacesSearchWidget.class);
+            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+            appWidgetManager.updateAppWidget(thisWidget, widgetView);
         }
 
     }
