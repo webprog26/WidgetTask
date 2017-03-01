@@ -2,6 +2,7 @@ package com.dark.webprog26.placessearchwidget;
 
 
 import android.appwidget.AppWidgetManager;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -9,6 +10,10 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.Toast;
+
 import com.dark.webprog26.placessearchwidget.events.PlacesIconsReadyEvent;
 import com.dark.webprog26.placessearchwidget.events.PlacesListReadyEvent;
 import com.dark.webprog26.placessearchwidget.helpers.BitmapDecoder;
@@ -32,6 +37,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 import static com.dark.webprog26.placessearchwidget.R.id.map;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
@@ -43,6 +51,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public static final int MAPS_ACTIVITY_MODE = 101;
     public static final String PREFS_LAST_SEARCH_RESULTS_COUNT = "com.dark.webprog26.placessearchwidget.prefs_last_search_result_count";
 
+    @BindView(R.id.progressBarContainer)
+    FrameLayout mProgressBarContainer;
 
     private LocationModel mLocationModel;
     private Map<PlaceModel, Bitmap> mIconsMap = new HashMap<>();
@@ -55,6 +65,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+        ButterKnife.bind(this);
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mGpsTracker = new GPSTracker(this);
         if(!mGpsTracker.canGetLocation()){
@@ -74,6 +85,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 widgetId = getIntent().getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
             }
             new PlacesLoader(MapsActivity.this).loadPlaces(MAPS_ACTIVITY_MODE, mLocationModel, userRequest, widgetId);
+        } else {
+            //App is newly installed or SharedPreferences were erased
+            Toast.makeText(this, getString(R.string.type_your_request), Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
         }
     }
 
@@ -81,16 +97,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onStart() {
         super.onStart();
         EventBus.getDefault().register(this);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-//        String userRequest = mSharedPreferences.getString(MainActivity.PREFS_LAST_SEARCH_REQUEST, null);
-//        if(userRequest != null){
-//            int widgetId = getIntent().getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-//            new PlacesLoader(MapsActivity.this).loadPlaces(MAPS_ACTIVITY_MODE, mLocationModel, userRequest, widgetId);
-//        }
     }
 
     /**
@@ -156,6 +162,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             final Marker marker = mMap.addMarker(markerOptions);
             MarkerAnimator.animateMarker(mMap, marker, userSearchLocation);
+        }
+
+        if(mProgressBarContainer.getVisibility() == View.VISIBLE){
+            mProgressBarContainer.setVisibility(View.GONE);
         }
     }
 }
