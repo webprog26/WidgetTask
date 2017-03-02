@@ -164,7 +164,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Subscribe(threadMode = ThreadMode.ASYNC)
     public void onPlacesListReadyEvent(PlacesListReadyEvent placesListReadyEvent){
         ArrayList<PlaceModel> placeModels = placesListReadyEvent.getPlaceModels();
-        Log.i(TAG, "onPlacesListReadyEvent " + placeModels.size());
         if(placeModels.size() == 0){
             runOnUiThread(new Runnable() {
                 @Override

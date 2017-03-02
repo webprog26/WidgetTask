@@ -35,7 +35,6 @@ public class PlacesSearchWidget extends AppWidgetProvider {
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         super.onUpdate(context, appWidgetManager, appWidgetIds);
-        Log.i(TAG, "onUpdate()");
         for(int id: appWidgetIds){
             setWidgetLastSearchResults(context, appWidgetManager, id);
         }
@@ -69,7 +68,6 @@ public class PlacesSearchWidget extends AppWidgetProvider {
         }
 
         if(intent.getAction().equalsIgnoreCase(PlacesLoader.ACTION_NEW_REQUEST_PROCESSED)){
-            Log.i(TAG, "updating without id");
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
             RemoteViews widgetView = new RemoteViews(context.getPackageName(),
                     R.layout.widget_layout);
