@@ -6,4 +6,8 @@
     <string name="search">Search</string>
     <string name="results_found">%1$s: %2$d results</string>
     <string name="type_your_request">Type your request</string>
+    <string name="internet_connection_is_missing">Internet connection is missing!</string>
+    <string name="gps_settings">GPS settings</string>
+    <string name="gps_is_not_enabled">GPS is not enabled. Do you want to go to settings menu?</string>
+    <string name="location_providers_are_not_enabled">Can\'t define your current location</string>
 </resources>

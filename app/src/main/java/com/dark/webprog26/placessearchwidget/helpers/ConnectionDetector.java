@@ -18,6 +18,10 @@ public class ConnectionDetector {
         this.mContextWeakReference = new WeakReference<Context>(context);
     }
 
+    /**
+     * Check is Internet connection available
+     * @return boolean
+     */
     @SuppressWarnings("deprecation")
     public boolean isConnectedToInternet(){
         ConnectivityManager connectivityManager = (ConnectivityManager) mContextWeakReference.get()

@@ -17,6 +17,7 @@ import android.widget.Toast;
 import com.dark.webprog26.placessearchwidget.events.PlacesIconsReadyEvent;
 import com.dark.webprog26.placessearchwidget.events.PlacesListReadyEvent;
 import com.dark.webprog26.placessearchwidget.helpers.BitmapDecoder;
+import com.dark.webprog26.placessearchwidget.helpers.ConnectionDetector;
 import com.dark.webprog26.placessearchwidget.helpers.GPSTracker;
 import com.dark.webprog26.placessearchwidget.helpers.MarkerAnimator;
 import com.dark.webprog26.placessearchwidget.helpers.PlacesLoader;
@@ -55,17 +56,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     FrameLayout mProgressBarContainer;
 
     private LocationModel mLocationModel;
-    private Map<PlaceModel, Bitmap> mIconsMap = new HashMap<>();
     private SharedPreferences mSharedPreferences;
 
     private GoogleMap mMap;
     private GPSTracker mGpsTracker;
+    private ConnectionDetector mConnectionDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         ButterKnife.bind(this);
+        mConnectionDetector = new ConnectionDetector(this);
+        if(!mConnectionDetector.isConnectedToInternet()){
+            //Internet connection is missing! Show the message
+            Toast.makeText(this, getString(R.string.internet_connection_is_missing), Toast.LENGTH_SHORT).show();
+            //Can't process, finish & return
+            finish();
+            return;
+        }
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mGpsTracker = new GPSTracker(this);
         if(!mGpsTracker.canGetLocation()){
@@ -82,11 +91,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if(getIntent().getIntExtra(MainActivity.NEW_REQUEST, 0) == MainActivity.NEW_REQUEST_MODE){
                 widgetId = getIntent().getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
             } else {
+                //We've got a call from the widget
                 widgetId = getIntent().getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
             }
+            //Call PlaceLoader instance to load places following the user request via Google Places Web API using Retrofit library
             new PlacesLoader(MapsActivity.this).loadPlaces(MAPS_ACTIVITY_MODE, mLocationModel, userRequest, widgetId);
         } else {
-            //App is newly installed or SharedPreferences were erased
+            //App is newly installed or SharedPreferences were erased, but we've got a call from the widget
             Toast.makeText(this, getString(R.string.type_your_request), Toast.LENGTH_SHORT).show();
             startActivity(new Intent(this, MainActivity.class));
             finish();
@@ -110,6 +121,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        //Initializing the map
         mMap = googleMap;
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 
@@ -120,6 +132,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         if(mLocationModel != null){
+            //Getting last known user location, marking it with app icon and move camera to it
             LatLng userLocation = new LatLng(mLocationModel.getLat(), mLocationModel.getLng());
             mMap.addMarker(new MarkerOptions().position(userLocation)
                     .title(getString(R.string.you_are_here))
@@ -130,11 +143,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        if(mGpsTracker != null && isFinishing()){
+            mGpsTracker.stopTrackingWithGPS();
+        }
+    }
+
+    @Override
     protected void onStop() {
         EventBus.getDefault().unregister(this);
         super.onStop();
     }
 
+    /**
+     * Receives list of places by user request and loads places icons
+     * Shows message if no results found
+     * @param placesListReadyEvent {@link PlacesListReadyEvent}
+     */
     @Subscribe(threadMode = ThreadMode.ASYNC)
     public void onPlacesListReadyEvent(PlacesListReadyEvent placesListReadyEvent){
         ArrayList<PlaceModel> placeModels = placesListReadyEvent.getPlaceModels();
@@ -149,20 +175,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             });
             return;
         }
-
+            Map<PlaceModel, Bitmap> iconsMap = new HashMap<>();
             for(PlaceModel placeModel: placeModels){
-                mIconsMap.put(placeModel, BitmapDecoder.getBitmapFromURL(placeModel.getIcon()));
+                iconsMap.put(placeModel, BitmapDecoder.getBitmapFromURL(placeModel.getIcon()));
                 Log.i(TAG, placeModel.getIcon());
         }
-        EventBus.getDefault().post(new PlacesIconsReadyEvent(mIconsMap));
+        EventBus.getDefault().post(new PlacesIconsReadyEvent(iconsMap));
     }
 
+    /**
+     * Draws markers with already loaded and stored in mIconsMap icons, animates them
+     * @param placesIconsReadyEvent {@link PlacesIconsReadyEvent}
+     */
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onPlacesIconsReadyEvent(PlacesIconsReadyEvent placesIconsReadyEvent){
-        for(PlaceModel placeModel: mIconsMap.keySet()){
+        Map<PlaceModel, Bitmap> iconsMap = placesIconsReadyEvent.getPlaceModelsWithIcons();
+        for(PlaceModel placeModel: iconsMap.keySet()){
             LocationModel locationModel = placeModel.getGeometry().getLocation();
             final LatLng userSearchLocation = new LatLng(locationModel.getLat(), locationModel.getLng());
-            Bitmap iconBitmap = mIconsMap.get(placeModel);
+            Bitmap iconBitmap = iconsMap.get(placeModel);
 
             MarkerOptions markerOptions = new MarkerOptions();
             markerOptions.position(userSearchLocation).title(placeModel.getName()).visible(false);
@@ -177,6 +208,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         hideProgressBar();
     }
 
+    /**
+     * Hides progress bar
+     */
     private void hideProgressBar(){
         if(mProgressBarContainer.getVisibility() == View.VISIBLE){
             mProgressBarContainer.setVisibility(View.GONE);

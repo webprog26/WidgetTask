@@ -10,6 +10,11 @@ import java.util.ArrayList;
 
 public class PlacesListReadyEvent {
 
+    /**
+     * When we've got user request, we should load list
+     * of places that are equal to request from Goggle Places API
+     */
+
     private final ArrayList<PlaceModel> mPlaceModels;
 
     public PlacesListReadyEvent(ArrayList<PlaceModel> mPlaceModels) {

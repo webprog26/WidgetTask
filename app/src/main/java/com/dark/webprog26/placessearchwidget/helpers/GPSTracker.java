@@ -17,6 +17,8 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.widget.Toast;
 
+import com.dark.webprog26.placessearchwidget.R;
+
 import java.lang.ref.WeakReference;
 
 /**
@@ -44,15 +46,22 @@ public class GPSTracker implements LocationListener {
         getLocation();
     }
 
+    /**
+     * Gets user last known location
+     * @return Location
+     */
     public Location getLocation(){
         try{
             Context context = mContextWeakReference.get();
+            //Initializing LocationManager
             mLocationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+            //Initializing location providers
             isGPSEnabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
             isNetworkEnabled = mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
             if(!isGPSEnabled && !isNetworkEnabled){
-                Toast.makeText(context, "Can't define your current location", Toast.LENGTH_SHORT).show();
+                //Both location providers are disabled. Show user message
+                Toast.makeText(context, context.getString(R.string.location_providers_are_not_enabled), Toast.LENGTH_SHORT).show();
             } else {
                 canGetLocation = true;
                 if(isNetworkEnabled){
@@ -94,6 +103,9 @@ public class GPSTracker implements LocationListener {
         }
 
 
+    /**
+     * Stops unnecessary gps-tracking
+     */
     public void stopTrackingWithGPS(){
         if(mLocationManager != null){
             try {
@@ -104,6 +116,10 @@ public class GPSTracker implements LocationListener {
         }
     }
 
+    /**
+     * Gets current user location latitude
+     * @return double
+     */
     public double getLatitude(){
         if(mLocation != null){
             lat = mLocation.getLatitude();
@@ -111,6 +127,10 @@ public class GPSTracker implements LocationListener {
         return lat;
     }
 
+    /**
+     * Gets current user location longitude
+     * @return double
+     */
     public double getLongitude(){
         if(mLocation != null){
             lng = mLocation.getLongitude();
@@ -118,32 +138,40 @@ public class GPSTracker implements LocationListener {
         return lng;
     }
 
+    /**
+     * Checks are any location providers enabled
+     * @return boolean
+     */
     public boolean canGetLocation() {
         return canGetLocation;
     }
 
+    /**
+     * Shows AlertDialog in case GPS is disabled
+     */
     public void showSettingsAlert() {
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(mContextWeakReference.get());
+        final Context context = mContextWeakReference.get();
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(context);
 
         // Setting Dialog Title
-        alertDialog.setTitle("GPS is settings");
+        alertDialog.setTitle(context.getString(R.string.gps_settings));
 
         // Setting Dialog Message
         alertDialog
-                .setMessage("GPS is not enabled. Do you want to go to settings menu?");
+                .setMessage(context.getString(R.string.gps_is_not_enabled));
 
         // On pressing Settings button
-        alertDialog.setPositiveButton("Settings",
+        alertDialog.setPositiveButton(android.R.string.ok,
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         Intent intent = new Intent(
                                 Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                        mContextWeakReference.get().startActivity(intent);
+                        context.startActivity(intent);
                     }
                 });
 
         // on pressing cancel button
-        alertDialog.setNegativeButton("Cancel",
+        alertDialog.setNegativeButton(android.R.string.cancel,
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
@@ -166,11 +194,17 @@ public class GPSTracker implements LocationListener {
 
     @Override
     public void onProviderEnabled(String provider) {
-
+        isGPSEnabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        isNetworkEnabled = mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
     }
 
     @Override
     public void onProviderDisabled(String provider) {
+        isGPSEnabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        isNetworkEnabled = mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
+        if(!isGPSEnabled && !isNetworkEnabled){
+            stopTrackingWithGPS();
+        }
     }
 }

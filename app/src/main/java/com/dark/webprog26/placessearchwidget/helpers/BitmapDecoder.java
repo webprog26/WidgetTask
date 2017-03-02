@@ -14,6 +14,11 @@ import java.net.URL;
 
 public class BitmapDecoder {
 
+    /**
+     * Decodes stream to {@link Bitmap}
+     * @param src {@link String}
+     * @return {@link Bitmap}
+     */
     public static Bitmap getBitmapFromURL(String src) {
         try {
             URL url = new URL(src);
@@ -24,7 +29,7 @@ public class BitmapDecoder {
             Bitmap myBitmap = BitmapFactory.decodeStream(input);
             return myBitmap;
         } catch (IOException e) {
-            // Log exception
+            e.printStackTrace();
             return null;
         }
     }

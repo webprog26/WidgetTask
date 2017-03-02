@@ -12,7 +12,10 @@ import java.util.Map;
  */
 
 public class PlacesIconsReadyEvent {
-
+    /**
+     * When places are loaded from Google Places Web API via retrofit library methods
+     * we should load their icons and put into {@link Map}
+     */
     private final Map<PlaceModel, Bitmap> mPlacesWithIconsMap;
 
     public PlacesIconsReadyEvent(Map<PlaceModel, Bitmap> placesWithIconsMap) {

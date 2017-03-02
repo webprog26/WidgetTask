@@ -17,6 +17,12 @@ import com.google.android.gms.maps.model.Marker;
 
 public class MarkerAnimator {
 
+    /**
+     * Animates map markers
+     * @param map {@link GoogleMap}
+     * @param marker {@link Marker}
+     * @param targetLocation {@link LatLng}
+     */
     public static void animateMarker(final GoogleMap map, final Marker marker, final LatLng targetLocation){
         final long duration = 400;
         final Handler handler = new Handler();
