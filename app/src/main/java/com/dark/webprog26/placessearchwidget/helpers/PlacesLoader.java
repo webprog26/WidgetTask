@@ -54,7 +54,6 @@ public class PlacesLoader {
     public void loadPlaces(final int mCurrentMode, final LocationModel locationModel, String userRequest, final int widgetId){
         final Context context = mContextWeakReference.get();
 
-        Log.i(TAG, "loadPlaces");
         //Making call to Google Places API via retrofit library methods
         final Call<PlacesResponseModel> placesResponseCall = mApiInterface.getPlaces(userRequest,
                 makeLocationString(locationModel), API_KEY);
@@ -77,7 +76,6 @@ public class PlacesLoader {
                                 //Entry point is widget, refresh it's data by widget's id
                                 PlacesSearchWidget.setWidgetLastSearchResults(context, AppWidgetManager.getInstance(context), widgetId);
                             } else {
-                                Log.i(TAG, "in MapActivity mode INVALID_APPWIDGET_ID");
                                 //Entry point is MainActivity, widget's id is not known,
                                 //but for it works like a BroadcastReceiver we could send broadcast
                                 context.sendBroadcast(new Intent(ACTION_NEW_REQUEST_PROCESSED));
