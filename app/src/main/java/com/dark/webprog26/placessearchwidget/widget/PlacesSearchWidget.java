@@ -17,9 +17,8 @@ import com.dark.webprog26.placessearchwidget.MainActivity;
 import com.dark.webprog26.placessearchwidget.MapsActivity;
 import com.dark.webprog26.placessearchwidget.R;
 import com.dark.webprog26.placessearchwidget.helpers.ConnectionDetector;
-import com.dark.webprog26.placessearchwidget.helpers.GPSTracker;
 import com.dark.webprog26.placessearchwidget.helpers.PlacesLoader;
-import com.dark.webprog26.placessearchwidget.models.LocationModel;
+import com.dark.webprog26.placessearchwidget.services.ServiceLocation;
 
 /**
  * Created by webpr on 28.02.2017.
@@ -52,19 +51,11 @@ public class PlacesSearchWidget extends AppWidgetProvider {
             }
 
             if(widgetId != AppWidgetManager.INVALID_APPWIDGET_ID){
-                String userRequest = PreferenceManager.getDefaultSharedPreferences(context).getString(MainActivity.PREFS_LAST_SEARCH_REQUEST, null);
-                if(userRequest != null){
-                    ConnectionDetector connectionDetector = new ConnectionDetector(context);
-                    if(!connectionDetector.isConnectedToInternet()){
-                        //Internet connection is missing! Show the message
-                        Toast.makeText(context, context.getString(R.string.internet_connection_is_missing), Toast.LENGTH_SHORT).show();
-                        //Can't process, return
-                        return;
-                    }
-                    GPSTracker gpsTracker = new GPSTracker(context);
-                    final LocationModel locationModel = new LocationModel(gpsTracker.getLatitude(), gpsTracker.getLongitude());
-                    new PlacesLoader(context).loadPlaces(WIDGET_UPDATE_MODE, locationModel, userRequest, widgetId);
-                }
+                Intent locationServiceIntent = new Intent(context, ServiceLocation.class);
+                locationServiceIntent.setAction(ServiceLocation.ACTION_LOCATION_REQUEST);
+                locationServiceIntent.putExtra(ServiceLocation.SERVICE_MODE, WIDGET_UPDATE_MODE);
+                locationServiceIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId);
+                context.startService(locationServiceIntent);
             }
         }
 

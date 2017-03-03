@@ -16,6 +16,7 @@ import com.dark.webprog26.placessearchwidget.models.PlaceModel;
 import com.dark.webprog26.placessearchwidget.models.PlacesResponseModel;
 import com.dark.webprog26.placessearchwidget.retrofit.ApiClient;
 import com.dark.webprog26.placessearchwidget.retrofit.ApiInterface;
+import com.dark.webprog26.placessearchwidget.services.ServiceLocation;
 import com.dark.webprog26.placessearchwidget.widget.PlacesSearchWidget;
 
 import org.greenrobot.eventbus.EventBus;
@@ -86,6 +87,7 @@ public class PlacesLoader {
                         case PlacesSearchWidget.WIDGET_UPDATE_MODE:
                             //Because this is explicitly call from the widget we can update it's data by id
                             PlacesSearchWidget.setWidgetLastSearchResults(context, AppWidgetManager.getInstance(context), widgetId);
+                            context.stopService(new Intent(context, ServiceLocation.class));
                             break;
                     }
             }

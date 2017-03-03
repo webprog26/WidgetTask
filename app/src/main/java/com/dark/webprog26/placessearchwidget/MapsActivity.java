@@ -14,15 +14,16 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import com.dark.webprog26.placessearchwidget.events.LocationFoundEvent;
 import com.dark.webprog26.placessearchwidget.events.PlacesIconsReadyEvent;
 import com.dark.webprog26.placessearchwidget.events.PlacesListReadyEvent;
 import com.dark.webprog26.placessearchwidget.helpers.BitmapDecoder;
 import com.dark.webprog26.placessearchwidget.helpers.ConnectionDetector;
-import com.dark.webprog26.placessearchwidget.helpers.GPSTracker;
 import com.dark.webprog26.placessearchwidget.helpers.MarkerAnimator;
 import com.dark.webprog26.placessearchwidget.helpers.PlacesLoader;
 import com.dark.webprog26.placessearchwidget.models.LocationModel;
 import com.dark.webprog26.placessearchwidget.models.PlaceModel;
+import com.dark.webprog26.placessearchwidget.services.ServiceLocation;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -59,8 +60,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private SharedPreferences mSharedPreferences;
 
     private GoogleMap mMap;
-    private GPSTracker mGpsTracker;
     private ConnectionDetector mConnectionDetector;
+    private int widgetId;
+    private String userRequest;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,26 +78,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        mGpsTracker = new GPSTracker(this);
-        if(!mGpsTracker.canGetLocation()){
-            mGpsTracker.showSettingsAlert();
-        }
-        mLocationModel = new LocationModel(mGpsTracker.getLatitude(), mGpsTracker.getLongitude());
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(map);
-        mapFragment.getMapAsync(this);
-        String userRequest = mSharedPreferences.getString(MainActivity.PREFS_LAST_SEARCH_REQUEST, null);
+
+        userRequest = mSharedPreferences.getString(MainActivity.PREFS_LAST_SEARCH_REQUEST, null);
         if(userRequest != null){
-            int widgetId;
             if(getIntent().getIntExtra(MainActivity.NEW_REQUEST, 0) == MainActivity.NEW_REQUEST_MODE){
                 widgetId = getIntent().getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
             } else {
                 //We've got a call from the widget
                 widgetId = getIntent().getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
             }
-            //Call PlaceLoader instance to load places following the user request via Google Places Web API using Retrofit library
-            new PlacesLoader(MapsActivity.this).loadPlaces(MAPS_ACTIVITY_MODE, mLocationModel, userRequest, widgetId);
+            //Starting service to get current user location
+            Intent locationIntent = new Intent(this, ServiceLocation.class);
+            locationIntent.setAction(ServiceLocation.ACTION_LOCATION_REQUEST);
+            locationIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId);
+            locationIntent.putExtra(ServiceLocation.SERVICE_MODE, MAPS_ACTIVITY_MODE);
+            startService(locationIntent);
         } else {
             //App is newly installed or SharedPreferences were erased, but we've got a call from the widget
             Toast.makeText(this, getString(R.string.type_your_request), Toast.LENGTH_SHORT).show();
@@ -108,6 +105,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onStart() {
         super.onStart();
         EventBus.getDefault().register(this);
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onLocationFoundEvent(LocationFoundEvent locationFoundEvent){
+        mLocationModel = locationFoundEvent.getLocationModel();
+        stopService(new Intent(this, ServiceLocation.class));
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(map);
+        mapFragment.getMapAsync(this);
+       new PlacesLoader(this).loadPlaces(MapsActivity.MAPS_ACTIVITY_MODE, mLocationModel, userRequest, widgetId);
     }
 
     /**
@@ -139,14 +147,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher))));
             mMap.moveCamera(CameraUpdateFactory.newLatLng(userLocation));
             mMap.moveCamera(CameraUpdateFactory.zoomTo(CAMERA_ZOOM_DISTANCE));
-        }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if(mGpsTracker != null && isFinishing()){
-            mGpsTracker.stopTrackingWithGPS();
         }
     }
 
